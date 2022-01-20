@@ -34,14 +34,14 @@ func init() {
 			Use:   command.Name,
 			Short: command.Description,
 			Args:  cobra.NoArgs,
-			Run:   sad(command),
+			Run:   buildHandlerFunction(command),
 		})
 	}
 }
 
-func sad(command Command) func(cmd *cobra.Command, args []string) {
+func buildHandlerFunction(command Command) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		root(command)
+		printCommandExamples(command)
 	}
 }
 
@@ -64,7 +64,7 @@ type Example struct {
 	Description string `yaml:"description"`
 }
 
-func root(command Command) {
+func printCommandExamples(command Command) {
 
 	fmt.Printf("%v\n\n", command.Description)
 	fmt.Printf("%v\n\n", command.Url)
