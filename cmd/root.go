@@ -18,23 +18,75 @@ var rootCmd = &cobra.Command{
 
 const kexFileEnvar = "KEX_FILE"
 
+var output string
+
 func init() {
 	kexFileLocation, set := os.LookupEnv(kexFileEnvar)
+	rootCmd.PersistentFlags().StringVarP(&output, "output", "o", "cli", "output mode")
 
 	if set {
+
 		commands, err := parseCommands(kexFileLocation)
 		if err != nil {
 			panic(fmt.Errorf("error when parsing kex file %v: %w", kexFileLocation, err))
 		}
 
+		list := &cobra.Command{
+			Use:   "list",
+			Short: "List all commands",
+			Run: func(cmd *cobra.Command, args []string) {
+				listCommands(commands)
+			},
+		}
+		rootCmd.AddCommand(list)
+
+		view := &cobra.Command{
+			Use:   "view",
+			Short: "View a command",
+		}
+		rootCmd.AddCommand(view)
+
 		for _, command := range commands {
-			rootCmd.AddCommand(&cobra.Command{
+			view.AddCommand(&cobra.Command{
 				Use:   command.Name,
 				Short: command.Description,
 				Args:  cobra.NoArgs,
 				Run:   buildHandlerFunction(command),
 			})
 		}
+	}
+}
+
+func listCommands(commands []Command) {
+	if output == "md" {
+		listCommandsMarkdown(commands)
+	} else {
+		listCommandsCli(commands)
+	}
+}
+
+func listCommandsCli(commands []Command) {
+
+}
+
+func listCommandsMarkdown(commands []Command) {
+	fmt.Println("# Commands")
+	for _, command := range commands {
+
+		if command.Url != "" {
+			fmt.Printf("### [%v](%v)\n\n", command.Name, command.Url)
+		} else {
+			fmt.Printf("### %v\n", command.Name)
+		}
+		fmt.Printf("%v\n\n", command.Description)
+		if command.Notes != "" {
+			fmt.Printf("%v\n\n", command.Notes)
+		}
+		if len(command.Examples) > 0 {
+			toMarkdown(command)
+		}
+
+		fmt.Println("")
 	}
 }
 
@@ -57,7 +109,12 @@ func parseCommands(file string) ([]Command, error) {
 
 func buildHandlerFunction(command Command) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		printCommandExamples(command)
+
+		if output == "md" {
+			toMarkdown(command)
+		} else {
+			printCommandExamples(command)
+		}
 	}
 }
 
@@ -104,5 +161,24 @@ func printCommandExamples(command Command) {
 	for _, example := range command.Examples {
 		table.Append([]string{example.Command, example.Description})
 	}
+	table.Render()
+}
+
+func toMarkdown(command Command) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Example", "Description"})
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoFormatHeaders(false)
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+	table.SetColWidth(150)
+
+	var data [][]string
+	for _, example := range command.Examples {
+		data = append(data, []string{fmt.Sprintf("`%v`", example.Command), example.Description})
+	}
+
+	table.AppendBulk(data) // Add Bulk Data
 	table.Render()
 }
