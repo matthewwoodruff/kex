@@ -84,7 +84,9 @@ type Example struct {
 func printCommandExamples(command Command) {
 
 	fmt.Printf("%v\n\n", command.Description)
-	fmt.Printf("%v\n\n", command.Notes)
+	if command.Notes != "" {
+		fmt.Printf("%v\n\n", command.Notes)
+	}
 	if command.Url != "" {
 		fmt.Printf("%v\n\n", command.Url)
 	}
