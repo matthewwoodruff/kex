@@ -1,0 +1,6 @@
+language: go
+go:
+  - 1.x
+dist: trusty
+
+script: go build -o bin/kex main.go
