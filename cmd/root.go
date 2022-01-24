@@ -24,7 +24,7 @@ func init() {
 	if set {
 		commands, err := parseCommands(kexFileLocation)
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("error when parsing kex file %v: %w", kexFileLocation, err))
 		}
 
 		for _, command := range commands {
@@ -39,7 +39,7 @@ func init() {
 }
 
 func parseCommands(file string) ([]Command, error) {
-	bytes, err := ioutil.ReadFile("commands.yaml")
+	bytes, err := ioutil.ReadFile(file)
 
 	if err != nil {
 		return []Command{}, fmt.Errorf("failed to read kex file: %w", err)
